@@ -1,3 +1,8 @@
+
+# freelog-music-player
+Demo实践：基于freelog平台实现一个简易音乐播放器
+>>>>>>> 029c5054d3f29ccb5f75dd0e713daf2a5f46948b
+
 # freelog-musicplayer-wwzh
 
 > music player
