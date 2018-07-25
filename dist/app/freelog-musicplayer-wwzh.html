@@ -597,8 +597,6 @@ var FreelogMusicplayerWwzh = function (_CustomElement2) {
         if (e == 'handlerPresentableErrorCode') return Promise.reject();
 
         _this5.$audio.src = 'api/v1/auths/presentable/' + presentableId + '.data?nodeId=' + nodeId + '&resourceId=' + resourceId;
-        //this.$audio.currentTime = 0
-
 
         if (_this5.isPlayingSong) {
           _this5.$audio.play().then(function () {

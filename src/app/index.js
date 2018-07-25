@@ -274,8 +274,6 @@ class FreelogMusicplayerWwzh extends HTMLElement {
         if(e == 'handlerPresentableErrorCode') return Promise.reject()
 
         this.$audio.src = `api/v1/auths/presentable/${presentableId}.data?nodeId=${nodeId}&resourceId=${resourceId}`
-        //this.$audio.currentTime = 0
-
 
         if(this.isPlayingSong){
           this.$audio.play()
