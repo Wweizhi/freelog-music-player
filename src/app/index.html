@@ -1,0 +1,111 @@
+<template>
+  <link rel="stylesheet" href="//static.freelog.com/pagebuild/static/css/reset.css">
+  <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <link rel="stylesheet" href="./index.css">
+
+  <div class="wrapper">
+    <div class="w-cont">
+      <div class="mp-info-box">
+          <div class="mp-info-cont">
+            <!-- <h1 class="music-name" title="Happy Now">Happy Now</h1>
+            <div class="music-singer">
+                <i class="icon_singer sprite"></i>
+                <span>Zedd (捷德)/Elley Duhè</span>
+            </div>
+            <ul class="music-info clearfix">
+              <li class="music-info-item">流派：Dance 舞曲</li>
+              <li class="music-info-item music-info-item-even">语种：英语</li>
+              <li class="music-info-item">发行时间：2018-07-18</li>
+              <li class="music-info-item music-info-item-even">发行公司：环球唱片</li>
+              <li class="music-info-item">类型：Single</li>
+            </ul> -->
+          </div>
+              
+          <div class="music-action" role="toolbar">
+            <button class="btn btn-success"><i class=""></i>开始播放</button>
+            <button class="btn btn-dafault disabled"><i class=""></i>收藏</button>
+            <button class="btn btn-dafault disabled"><i class=""></i>评论</button>
+            <button class="btn btn-dafault disabled"><i class=""></i>更多</button>
+          </div>
+      </div>
+      <div class="mp-list-head">
+        <div class="title">
+          歌曲列表 
+          <span class="info"><span id="playlist-count">45 </span>首歌</span>
+        </div>
+        <!-- <div class="right-box">播放：<strong id="play-count" class="s-fc6">363659</strong>次</div> -->
+      </div>
+      <div class="mp-list">
+          <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th width="238">歌曲标题</th>
+                  <th width="80">时长</th>
+                  <th>歌手</th>
+                  <th>专辑</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+        
+      </div>
+      <div class="music-player-bar clearfix">
+        <div class="music-player-b-cont clearfix">
+          <div class="mpb-left">
+            <a class="mpb-btn-prev" href="javascript:;">&lt; </a>
+            <a class="mpb-btn-play" href="javascript:;">
+              <span></span>
+              <span></span>
+            </a>
+            <a class="mpb-btn-next" href="javascript:;">&gt;</a>
+          </div>
+          <div class="mpb-center">
+            <div class="progress">
+              <div class="progress-bar progress-bar-success" role="progressbar" aria-valuemin="0" aria-valuemax="100" style="width: 0;"></div>
+            </div>
+            <div class="mpb-title">
+              <span class="mpb-music-name">Happy Now</span>
+              -
+              <span class="mpb-singer-name">Zedd (捷德)/Elley Duhè</span>
+            </div>
+            <div class="mpb-remaintime">
+              <!-- <div class="mpb-play-time">
+                <span>00</span>:<span>00</span>
+              </div>
+              /
+              <div class="mpb-total-time">
+                <span>04</span>:<span>00</span>
+              </div> -->
+            </div>
+            <div class="mpb-c-audio-bbox">
+              <audio src="" controls="controls"></audio>
+            </div>
+          </div>
+          <div class="mpb-right">
+            
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    <div id="error-toast">
+      <div class="et-close-btn">X</div>
+      <div id="et-info"></div>
+      <div id="et-btn"></div>
+      <div id="et-duration"></div>
+    </div>
+    <div class="mp-loading-box">
+      <div class="box loading-logo">
+          <ul>
+              <li class="first"><a href="#"></a></li>
+              <li class="second"><a href="#"></a></li>
+              <li class="third"><a href="#"></a></li>
+          </ul>
+      </div>
+    </div>
+    
+  </div>
+</template>
+
+<script src="./index.js"></script>

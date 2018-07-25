@@ -1,0 +1,831 @@
+<template>
+  <link rel="stylesheet" href="//static.freelog.com/pagebuild/static/css/reset.css">
+  <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <style rel="stylesheet">
+.wrapper { min-height: 768px; background-color: #e8c934; }
+.w-cont{
+    overflow: hidden;
+    width: 640px; padding: 0 15px; margin: auto; font-size: 12px;
+    background-color: #f1f1f1;
+}
+
+.mp-list-head{
+    position: relative;
+    padding: 5px 0;
+    border-bottom: 2px solid #c20c0c;
+}
+
+.mp-list-head .title{ font-size: 20px; font-weight: bold; }
+
+.mp-list-head .info{
+    margin-left: 20px; font-size: 12px; 
+    color: #666; font-weight: 400;
+}
+
+.mp-list-head .right-box{
+    position: absolute; bottom: 8px; right: 0; z-index: 1;
+    font-size: 12px; color: #666;
+}
+.mp-list tbody { cursor: pointer; }
+.mp-list tbody tr:hover{ background-color: #bfa; }
+
+#play-count { color: #c20c0c; }
+
+.music-name {
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 70%; margin-right: 10px;
+    font-size: 32px; font-weight: 400; line-height: 50px;
+}
+
+.music-info{ margin-bottom: 20px; padding-top: 8px; }
+
+.music-singer{ font-size: 16px; color: #333; }
+
+.music-info-item {
+    float: left;
+    width: 200px; margin-right: 30px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    line-height: 27px; font-size: 14px;
+}
+
+.test-btn {
+    background: red;
+    width: 100px;
+    height: 100px;
+}
+.music-action{ margin-bottom: 20px; }
+
+.music-action .btn, .music-action .btn:focus{ margin-right: 10px; outline: none; }
+
+.music-player-bar{
+    display: none;
+    position: fixed; left: 0; bottom: 0; right: 0; z-index: 100;
+    height: 42px; text-align: center; background-color: rgba(255, 255, 255, .3);
+}
+.music-player-bar.showed{
+    display: block;
+}
+.music-player-b-cont{
+    display: inline-block; width: 640px;
+    background-color: rgba(0,0,0,.5);
+    color: #fff;
+}
+
+.mpb-left a {
+    display: inline-block;
+    
+    padding: 10px 15px; margin-right: 5px; border-radius: 4px;
+    text-decoration: none; color: #fff; font-size: 16px; 
+}
+.mpb-left .mpb-btn-prev, .mpb-left .mpb-btn-next{ position: relative; top: -2px; }
+.mpb-center{ padding-top: 28px; margin-left: 10px;}
+
+.mpb-left, .mpb-center, .mpb-right{ position: relative; float: left;}
+
+.mpb-center .progress{ width: 480px; height: 8px; margin: 0; }
+
+.mpb-play-time, .mpb-total-time{ display: inline; }
+
+.mpb-title, .mpb-remaintime{ position: absolute; bottom: 12px; z-index: 10; }
+
+.mpb-title{ left: 0; }
+
+.mpb-remaintime{ right: 0; }
+
+.mpb-left .mpb-btn-play { width: 40px; }
+.mpb-left a.disabled{ color: #bdbdbd; pointer-events: none;  }
+.mpb-btn-play span:first-child{ 
+    display: inline-block;
+    position: relative; top: 2px;
+    border-bottom: 8px solid transparent; border-left: 10px solid #fff; border-top: 8px solid transparent;
+}
+.mpb-btn-play.paused span { display: inline-block; height: 12px; top: 0; border-width: 0; border-left: 2px solid #fff; }
+.mpb-c-audio-bbox{ position: absolute; z-index: -10; visibility: hidden; pointer-events: none; }
+
+/* error-toast start */
+#error-toast{
+    display: none; position: relative;
+    box-sizing: border-box;
+    position: fixed; top: 50%; left: 50%;  z-index: 99;
+    min-width: 300px; max-width: 500px; padding: 20px; transform: translateX(-50%) translateY(-50%); border-radius: 10px;
+    background-color: #f5f5f5; text-align: center; box-shadow: 0 0 10px #333;
+  }
+  
+  #error-toast.showed{
+    display: block;
+  }
+  
+  #et-info {
+    font-size: 18px; 
+  }
+  
+  #et-btn{
+    display: inline-block; 
+    padding: 3px 12px; margin-top: 10px; border: 1px solid #f56c6c; border-radius: 4px;
+    font-size: 14px; cursor: pointer;
+  }
+  
+  #et-duration{
+    margin-top: 10px;
+    font-size: 12px; color: #999;
+  }
+  
+  .et-close-btn{
+    position: absolute; top: 5px; right: 0; z-index: 10;
+    padding: 5px 15px; 
+    cursor: pointer;
+  }
+
+/* error-toast end */
+
+/* loading 动画 start */
+    .mp-loading-box{
+        display: none;
+        position: fixed; top: 0; bottom: 0; left: 0; right: 0; z-index: 100;
+    }
+
+    .mp-loading-box.showed{
+        display: block;
+      }
+    
+  .loading-logo { 
+    position: fixed; top: 50%; left: 50%; z-index: 100;
+    transform: translateX(-50%) translateY(-50%);
+    text-align: center;
+  }
+  .loading-logo.showed{
+    display: block;
+  }
+  .loading-logo ul{ height: 18px;}
+  .loading-logo ul > li{ position: relative; display: inline-block; width: 18px; height: 18px; line-height: 18px; text-align: center; }
+  .loading-logo ul > li a { position: absolute; display: inline-block; border-radius: 50%; background-color: rgba(0, 0, 0, .7); }
+  .loading-logo ul > li.first a{
+      animation: myfirst 1.2s linear 0s infinite alternate;
+      -moz-animation: myfirst 1.2s linear 0s infinite alternate; /* Firefox: */
+      -webkit-animation: myfirst 1.2s linear 0s infinite alternate;
+  }
+
+  .loading-logo ul > li.second a{
+      animation: myfirst 1.2s linear .3s infinite alternate;
+      -moz-animation: myfirst 1.2s linear .3s infinite alternate; /* Firefox: */
+      -webkit-animation: myfirst 1.2s linear .3s infinite alternate;
+  }
+
+  .loading-logo ul > li.third a{
+      animation: myfirst 1.2s linear 0.6s infinite alternate;
+      -moz-animation: myfirst 1.2s linear 0.6s infinite alternate; /* Firefox: */
+      -webkit-animation: myfirst 1.2s linear 0.6s infinite alternate;
+  }
+
+  @keyframes myfirst
+  {
+      0%{ top: 9px; left: 9px; width: 0px; height: 0px; }
+      50%{ top: 0px; left: 0px; width: 18px; height: 18px; }
+      100%{ top: 9px; left: 9px; width: 0px; height: 0px; }
+  }
+/* loading 动画 end */
+
+
+</style>
+
+  <div class="wrapper">
+    <div class="w-cont">
+      <div class="mp-info-box">
+          <div class="mp-info-cont">
+            <!-- <h1 class="music-name" title="Happy Now">Happy Now</h1>
+            <div class="music-singer">
+                <i class="icon_singer sprite"></i>
+                <span>Zedd (捷德)/Elley Duhè</span>
+            </div>
+            <ul class="music-info clearfix">
+              <li class="music-info-item">流派：Dance 舞曲</li>
+              <li class="music-info-item music-info-item-even">语种：英语</li>
+              <li class="music-info-item">发行时间：2018-07-18</li>
+              <li class="music-info-item music-info-item-even">发行公司：环球唱片</li>
+              <li class="music-info-item">类型：Single</li>
+            </ul> -->
+          </div>
+              
+          <div class="music-action" role="toolbar">
+            <button class="btn btn-success"><i class=""></i>开始播放</button>
+            <button class="btn btn-dafault disabled"><i class=""></i>收藏</button>
+            <button class="btn btn-dafault disabled"><i class=""></i>评论</button>
+            <button class="btn btn-dafault disabled"><i class=""></i>更多</button>
+          </div>
+      </div>
+      <div class="mp-list-head">
+        <div class="title">
+          歌曲列表 
+          <span class="info"><span id="playlist-count">45 </span>首歌</span>
+        </div>
+        <!-- <div class="right-box">播放：<strong id="play-count" class="s-fc6">363659</strong>次</div> -->
+      </div>
+      <div class="mp-list">
+          <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th width="238">歌曲标题</th>
+                  <th width="80">时长</th>
+                  <th>歌手</th>
+                  <th>专辑</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+        
+      </div>
+      <div class="music-player-bar clearfix">
+        <div class="music-player-b-cont clearfix">
+          <div class="mpb-left">
+            <a class="mpb-btn-prev" href="javascript:;">&lt; </a>
+            <a class="mpb-btn-play" href="javascript:;">
+              <span></span>
+              <span></span>
+            </a>
+            <a class="mpb-btn-next" href="javascript:;">&gt;</a>
+          </div>
+          <div class="mpb-center">
+            <div class="progress">
+              <div class="progress-bar progress-bar-success" role="progressbar" aria-valuemin="0" aria-valuemax="100" style="width: 0;"></div>
+            </div>
+            <div class="mpb-title">
+              <span class="mpb-music-name">Happy Now</span>
+              -
+              <span class="mpb-singer-name">Zedd (捷德)/Elley Duhè</span>
+            </div>
+            <div class="mpb-remaintime">
+              <!-- <div class="mpb-play-time">
+                <span>00</span>:<span>00</span>
+              </div>
+              /
+              <div class="mpb-total-time">
+                <span>04</span>:<span>00</span>
+              </div> -->
+            </div>
+            <div class="mpb-c-audio-bbox">
+              <audio src="" controls="controls"></audio>
+            </div>
+          </div>
+          <div class="mpb-right">
+            
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    <div id="error-toast">
+      <div class="et-close-btn">X</div>
+      <div id="et-info"></div>
+      <div id="et-btn"></div>
+      <div id="et-duration"></div>
+    </div>
+    <div class="mp-loading-box">
+      <div class="box loading-logo">
+          <ul>
+              <li class="first"><a href="#"></a></li>
+              <li class="second"><a href="#"></a></li>
+              <li class="third"><a href="#"></a></li>
+          </ul>
+      </div>
+    </div>
+    
+  </div>
+</template>
+
+<script>
+ var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+function _CustomElement() {
+  return Reflect.construct(HTMLElement, [], this.__proto__.constructor);
+}
+
+;
+Object.setPrototypeOf(_CustomElement.prototype, HTMLElement.prototype);
+Object.setPrototypeOf(_CustomElement, HTMLElement);
+var template = document.currentScript.parentNode.querySelector('template');
+
+var FreelogMusicplayerWwzh = function (_CustomElement2) {
+  _inherits(FreelogMusicplayerWwzh, _CustomElement2);
+
+  function FreelogMusicplayerWwzh() {
+    _classCallCheck(this, FreelogMusicplayerWwzh);
+
+    var _this = _possibleConstructorReturn(this, (FreelogMusicplayerWwzh.__proto__ || Object.getPrototypeOf(FreelogMusicplayerWwzh)).call(this));
+
+    var self = _this;
+    var shadowRoot = self.attachShadow({ mode: 'closed' });
+    var instance = template.content.cloneNode(true);
+    self.root = shadowRoot;
+    shadowRoot.appendChild(instance);
+    return _this;
+  }
+
+  _createClass(FreelogMusicplayerWwzh, [{
+    key: 'connectedCallback',
+    value: function connectedCallback() {
+      clearInterval(this.timer);
+      clearTimeout(this.tiemoutTimer);
+      this.init();
+    }
+  }, {
+    key: 'disconnectedCallback',
+    value: function disconnectedCallback() {}
+  }, {
+    key: 'init',
+    value: function init() {
+      this.isPlayingSong = false;
+      this.mpInfo = {
+        title: 'Happy Now', singer: 'Zedd (捷德)/Elley Duhè', lang: '英语', company: '环球唱片', type: 'Single',
+        publishDate: '2018-07-18', genre: 'Dance 舞曲'
+      };
+      this.songList = [];
+      // this.songList = [ 
+      //   { name: '忘了时间', singer: '刘晓松', src: './111.mp3', duration: '03:30', album: '一个人' },
+      //   { name: '忘了爱', singer: '雷晓松', src: './111.mp3', duration: '03:20', album: '一个人' },
+      //   { name: '忘了我', singer: '肖晓松', src: './111.mp3', duration: '03:40', album: '一个人' },
+      //   { name: '忘了忘了', singer: '余晓松', src: './111.mp3', duration: '03:33', album: '一个人' },
+      // ]
+      this.songPresentableList = [];
+      this.actIndex = 0;
+      this.songPlayedTime = 0;
+
+      this.getDom();
+      this.bindEvent();
+
+      this.showLoading();
+      this.renderTableBody();
+      this.renderMusicPlayerInfo();
+      this.gotSongCurrentTime();
+    }
+  }, {
+    key: 'fethchResourcesList',
+    value: function fethchResourcesList(type, targs) {
+      return window.QI.fetch('/v1/presentables?nodeId=' + window.__auth_info__.__auth_node_id__ + '&resourceType=' + type + '&tags=' + targs + '&isOnline=1').then(function (resp) {
+        return resp.json();
+      });
+    }
+  }, {
+    key: 'fetchNodeResourceDetail',
+    value: function fetchNodeResourceDetail(presentableId, resourceId) {
+      return window.QI.fetch('/v1/auths/presentable/' + presentableId + '?nodeId=' + window.__auth_info__.__auth_node_id__ + '&resourceId=' + resourceId).then(function (resp) {
+        return resp.json();
+      });
+    }
+  }, {
+    key: 'renderMusicPlayerInfo',
+    value: function renderMusicPlayerInfo() {
+      var _this2 = this;
+
+      this.showLoading();
+      this.fethchResourcesList('json', 'intro').then(function (res) {
+        _this2.hideLoading();
+        if (res.errcode == 0 && res.data.length) {
+          var _res$data$0$resourceI = res.data[0].resourceInfo.meta,
+              title = _res$data$0$resourceI.title,
+              singer = _res$data$0$resourceI.singer,
+              lang = _res$data$0$resourceI.lang,
+              company = _res$data$0$resourceI.company,
+              type = _res$data$0$resourceI.type,
+              publishDate = _res$data$0$resourceI.publishDate,
+              genre = _res$data$0$resourceI.genre;
+
+
+          var str = '\n            <h1 class="music-name" title="' + title + '">' + title + '</h1>\n            <div class="music-singer">\n                <i class="icon_singer sprite"></i>\n                <span>' + singer + '</span>\n            </div>\n            <ul class="music-info clearfix">\n              <li class="music-info-item">\u6D41\u6D3E\uFF1A' + genre + '</li>\n              <li class="music-info-item music-info-item-even">\u8BED\u79CD\uFF1A' + lang + '</li>\n              <li class="music-info-item">\u53D1\u884C\u65F6\u95F4\uFF1A' + publishDate + '</li>\n              <li class="music-info-item music-info-item-even">\u53D1\u884C\u516C\u53F8\uFF1A' + company + '</li>\n              <li class="music-info-item">\u7C7B\u578B\uFF1A' + type + '</li>\n            </ul>\n          ';
+          _this2.root.querySelector('.mp-info-cont').innerHTML = str;
+        }
+      }).catch(function (e) {
+        _this2.hideLoading();
+      });
+    }
+  }, {
+    key: 'renderTableBody',
+    value: function renderTableBody() {
+      var _this3 = this;
+
+      this.fethchResourcesList('audio', 'mp3').then(function (res) {
+        if (res.errcode == 0 && res.data.length) {
+          _this3.songPresentableList = res.data;
+          _this3.songList = res.data.map(function (item) {
+            return item.resourceInfo.meta;
+          });
+          var str = _this3.songList.map(function (song, i) {
+            var name = song.name,
+                singer = song.singer,
+                src = song.src,
+                duration = song.duration,
+                album = song.album;
+
+            return '<tr data-index="' + i + '">\n                    <td scope="row">' + (i + 1) + '</td>\n                    <td>' + name + '</td>\n                    <td>' + duration + '</td>\n                    <td>' + singer + '</td>\n                    <td>' + album + '</td>\n                  </tr>';
+          }).join('');
+          _this3.root.querySelector('.mp-list tbody').innerHTML = str;
+          _this3.root.querySelector('#playlist-count').innerHTML = _this3.songList.length;
+          setTimeout(function () {
+            _this3.$trs = _this3.root.querySelectorAll('tbody tr');
+
+            Array.from(_this3.$trs).forEach(function ($dom) {
+              return $dom.addEventListener('click', function (e) {
+                _this3.showLoading();
+                var index = e.currentTarget.getAttribute('data-index');
+                _this3.actIndex = +index;
+                _this3.initSong().then(function () {
+                  _this3.isShowedPlayer = true;
+                  _this3.playMusic();
+                  _this3.hideLoading();
+                }).catch(function (e) {
+                  return _this3.hideLoading();
+                });
+              });
+            });
+          }, 0);
+        }
+      });
+    }
+  }, {
+    key: 'renderSongTime',
+    value: function renderSongTime() {
+      var songPlayedTime = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+      var songDuration = arguments[1];
+
+
+      songPlayedTime = Math.floor(songPlayedTime);
+      if (!songDuration) return;
+
+      songDuration = Math.floor(songDuration);
+      var playTime = this.getTimeStr(songPlayedTime);
+      var totalTime = this.getTimeStr(songDuration);
+
+      this.$songTimeBox.innerHTML = '\n    <div class="mpb-play-time">' + playTime + '</div>\n    /\n    <div class="mpb-total-time">' + totalTime + '</div>\n  ';
+    }
+  }, {
+    key: 'getTimeStr',
+    value: function getTimeStr(time) {
+      var hourTime = Math.floor(time / 3600) % 60;
+      hourTime = hourTime > 9 ? hourTime : hourTime > 0 ? '0' + hourTime : 0;
+
+      var minuteTime = Math.floor(time / 60) % 60;
+      minuteTime = minuteTime > 9 ? minuteTime : '0' + minuteTime;
+
+      var secondTime = time % 60;
+      secondTime = secondTime > 9 ? secondTime : '0' + secondTime;
+
+      var timeStr = hourTime == 0 ? '<span>' + minuteTime + '</span>:<span>' + secondTime + '</span>' : '<span>' + hourTime + '</span>:<span>' + minuteTime + '</span>:<span>' + secondTime + '</span>';
+      return timeStr;
+    }
+  }, {
+    key: 'getDom',
+    value: function getDom() {
+      this.$audio = this.root.querySelector('audio');
+      this.$prevSongBtn = this.root.querySelector('.mpb-btn-prev');
+      this.$playSongBtn = this.root.querySelector('.mpb-btn-play');
+      this.$nextSongBtn = this.root.querySelector('.mpb-btn-next');
+      this.$progressBox = this.root.querySelector('.progress');
+      this.$progressBar = this.root.querySelector('.progress-bar');
+      this.$songTimeBox = this.root.querySelector('.mpb-remaintime');
+      this.$musicPlayeBox = this.root.querySelector('.music-player-bar');
+      this.$beginPlayBtn = this.root.querySelector('.music-action .btn-success');
+      this.$playMusicTitle = this.root.querySelector('.mpb-title');
+
+      this.$errorToast = this.root.querySelector('#error-toast'), this.$errorInfo = this.$errorToast.querySelector('#et-info'), this.$errorBtn = this.$errorToast.querySelector('#et-btn'), this.$errorDuration = this.$errorToast.querySelector('#et-duration');
+      this.$errorCloseBtn = this.$errorToast.querySelector('.et-close-btn');
+    }
+  }, {
+    key: 'bindEvent',
+    value: function bindEvent() {
+      var _this4 = this;
+
+      this.$prevSongBtn.addEventListener('click', function () {
+
+        var targIndex = _this4.actIndex - 1;
+        targIndex = targIndex < 0 ? 0 : targIndex;
+        if (targIndex == 0) {
+          _this4.toggleClass(_this4.$prevSongBtn, 'disabled', 'add');
+        } else {
+          _this4.toggleClass(_this4.$nextSongBtn, 'disabled', 'delete');
+        }
+
+        if (targIndex != _this4.actIndex) {
+          _this4.actIndex = targIndex;
+          _this4.initSong();
+          _this4.$progressBar.style.width = 0;
+        }
+      });
+
+      this.$nextSongBtn.addEventListener('click', this.playNextSong.bind(this));
+
+      this.$playSongBtn.addEventListener('click', function () {
+        if (!_this4.isPlayingSong) {
+          _this4.playMusic();
+        } else {
+          _this4.pauseMusic();
+        }
+      });
+
+      this.$progressBox.addEventListener('click', function (e) {
+        var _e$currentTarget$getB = e.currentTarget.getBoundingClientRect(),
+            x = _e$currentTarget$getB.x,
+            width = _e$currentTarget$getB.width;
+
+        var ratio = (e.x - x) / width;
+        var playTime = Math.floor(ratio * _this4.$audio.duration);
+
+        _this4.$audio.currentTime = playTime;
+        _this4.renderSongTime(playTime, _this4.$audio.duration);
+
+        _this4.$progressBar.style.width = +ratio.toFixed(2) * 100 + '%';
+
+        _this4.isPlayingSong && _this4.gotSongCurrentTime();
+        console.log(_this4.$audio.currentTime, playTime);
+      });
+
+      this.$beginPlayBtn.addEventListener('click', function (e) {
+        if (!_this4.isShowedPlayer) {
+          !_this4.isInitingSong && _this4.initSong().then(function () {
+            _this4.isShowedPlayer = true;
+            _this4.playMusic();
+          }).catch(function (e) {
+            return console.log(e);
+          });
+        } else {
+          if (!_this4.isPlayingSong) {
+            _this4.playMusic();
+          }
+        }
+      });
+
+      this.$errorBtn.addEventListener('click', function (e) {
+        _this4.shutdownCountdown = true;
+        _this4.toggleClass(_this4.$errorToast, 'showed', 'delete');
+        clearTimeout(_this4.tiemoutTimer);
+        _this4.timer = null;
+        _this4.presentableErrorResp && _this4.triggerAppEvent(_this4.presentableErrorResp);
+      });
+
+      this.$errorCloseBtn.addEventListener('click', this.closeErrorToast.bind(this));
+    }
+  }, {
+    key: 'initSong',
+    value: function initSong() {
+      var _this5 = this;
+
+      this.isInitingSong = true;
+      var _songList$actIndex = this.songList[this.actIndex],
+          name = _songList$actIndex.name,
+          singer = _songList$actIndex.singer;
+      var _songPresentableList$ = this.songPresentableList[this.actIndex],
+          presentableId = _songPresentableList$.presentableId,
+          nodeId = _songPresentableList$.nodeId,
+          resourceId = _songPresentableList$.resourceId;
+
+
+      this.$playMusicTitle.innerHTML = '\n      <span class="mpb-music-name">' + name + '</span>\n      -\n      <span class="mpb-singer-name">' + singer + '</span>\n    ';
+
+      return this.fetchNodeResourceDetail(presentableId, resourceId).then(function (res) {
+        _this5.isInitingSong = false;
+        _this5.presentableErrorResp = res;
+        _this5.handlerPresentableErrorCode(res, name);
+        return Promise.reject('handlerPresentableErrorCode');
+      }).catch(function (e) {
+        if (e == 'handlerPresentableErrorCode') return Promise.reject();
+
+        _this5.$audio.src = 'api/v1/auths/presentable/' + presentableId + '.data?nodeId=' + nodeId + '&resourceId=' + resourceId;
+        //this.$audio.currentTime = 0
+
+
+        if (_this5.isPlayingSong) {
+          _this5.$audio.play().then(function () {
+            _this5.renderSongTime(0, _this5.$audio.duration);
+          });
+        } else {
+          _this5.renderSongTime(0, _this5.$audio.duration);
+        }
+        _this5.showPlayerBox();
+        return Promise.resolve();
+      });
+    }
+  }, {
+    key: 'playMusic',
+    value: function playMusic() {
+      var _this6 = this;
+
+      this.toggleClass(this.$playSongBtn, 'paused', 'add');
+      this.isPlayingSong = true;
+      this.$audio.play().then(function () {
+        _this6.gotSongCurrentTime();
+      });
+    }
+  }, {
+    key: 'pauseMusic',
+    value: function pauseMusic() {
+      this.toggleClass(this.$playSongBtn, 'paused', 'delte');
+      this.isPlayingSong = false;
+      this.$audio.pause();
+      clearInterval(this.timer);
+    }
+  }, {
+    key: 'playNextSong',
+    value: function playNextSong() {
+      var targIndex = this.actIndex + 1;
+      targIndex = targIndex == this.songList.length ? targIndex - 1 : targIndex;
+      if (targIndex == this.songList.length - 1) {
+        this.toggleClass(this.$nextSongBtn, 'disabled', 'add');
+      } else {
+        this.toggleClass(this.$prevSongBtn, 'disabled', 'delete');
+      }
+      if (targIndex != this.actIndex) {
+        this.actIndex = targIndex;
+        this.initSong();
+        this.$progressBar.style.width = 0;
+      }
+    }
+  }, {
+    key: 'gotSongCurrentTime',
+    value: function gotSongCurrentTime() {
+      var _this7 = this;
+
+      clearInterval(this.timer);
+
+      var _$progressBox$getBoun = this.$progressBox.getBoundingClientRect(),
+          x = _$progressBox$getBoun.x,
+          width = _$progressBox$getBoun.width;
+
+      this.audioX = x;
+      this.audioW = width;
+
+      this.timer = setInterval(function () {
+        var _$audio = _this7.$audio,
+            currentTime = _$audio.currentTime,
+            duration = _$audio.duration;
+
+        console.log('currentTime', currentTime);
+
+        _this7.renderSongTime(currentTime, duration);
+
+        _this7.$progressBar.style.width = +(currentTime / duration * 100).toFixed(2) + '%';
+        if (currentTime == duration) {
+          _this7.playNextSong();
+          clearInterval(_this7.timer);
+        }
+      }, 1000);
+    }
+  }, {
+    key: 'handlerPresentableErrorCode',
+    value: function handlerPresentableErrorCode(resp, songName) {
+      var _this8 = this;
+
+      this.presentableErrorResp = resp;
+      switch (resp.errcode) {
+        case 503:
+          {
+            this.showErrorToast('亲，你未创建合同，歌曲<' + songName + '>播放不了！', // 未找到有效的presentable合约(用户尚未与请求的presentable签约或者合约已废弃)
+            '去创建', 5, function () {
+              _this8.triggerAppEvent(resp);
+            });
+            break;
+          }
+        case 501:
+          {
+            this.showErrorToast('亲，你的歌曲合同未执行！', // 未找到有效的presentable合约(用户尚未与请求的presentable签约或者合约已废弃)
+            '去执行', 5, function () {
+              _this8.triggerAppEvent(resp);
+            });
+            breal;
+          }
+      }
+    }
+  }, {
+    key: 'triggerAppEvent',
+    value: function triggerAppEvent(resp) {
+      var self = this;
+      var freelogApp = window.FreeLogApp;
+      var exception = freelogApp.ExceptionCode[resp.errcode];
+      var eventName = exception.action || freelogApp.EventCode.invalidResponse;
+
+      freelogApp.trigger(eventName, {
+        data: resp,
+        callback: function callback(presentable) {
+          var _contractStatus = presentable._contractStatus;
+
+          switch (_contractStatus) {
+            // 用户未创建合同
+            case -1:
+              {
+
+                break;
+              }
+            // 合同未执行
+            case 1:
+              {
+
+                break;
+              }
+            // 合同正在执行
+            case 2:
+              {
+
+                break;
+              }
+            // 合同生效中
+            case 3:
+              {
+                self.initSong();
+                break;
+              }
+          }
+        }
+      });
+    }
+  }, {
+    key: 'showErrorToast',
+    value: function showErrorToast(info, btnText, second, callback) {
+
+      if (info && btnText) {
+        this.$errorInfo.innerHTML = info;
+        this.$errorBtn.innerHTML = btnText;
+        this.toggleClass(this.$errorToast, 'showed', 'add');
+
+        if (second) {
+          this.shutdownCountdown = false;
+          this.closeToastSoon(second, callback);
+        }
+      }
+    }
+  }, {
+    key: 'closeErrorToast',
+    value: function closeErrorToast() {
+      this.toggleClass(this.$errorToast, 'showed', 'delete');
+      clearTimeout(this.tiemoutTimer);
+      this.tiemoutTimer = null;
+    }
+  }, {
+    key: 'closeToastSoon',
+    value: function closeToastSoon(second, callback) {
+      var _this9 = this;
+
+      if (this.shutdownCountdown) return;
+      this.$errorDuration.innerHTML = '\u8BE5\u63D0\u793A\u5728' + second + '\u79D2\u540E\u81EA\u52A8\u5173\u95ED...';
+      if (second == 0) {
+        this.toggleClass(this.$errorToast, 'showed', 'delete');
+        callback();
+        clearTimeout(this.tiemoutTimer);
+        this.tiemoutTimer = null;
+        return;
+      }
+      second -= 1;
+      this.tiemoutTimer = setTimeout(function () {
+        _this9.closeToastSoon.call(_this9, second, callback);
+      }, 1000);
+    }
+  }, {
+    key: 'showPlayerBox',
+    value: function showPlayerBox() {
+      var songCount = this.songList.length;
+
+      if (this.actIndex == 0) {
+        this.toggleClass(this.$prevSongBtn, 'disabled', 'add');
+      }
+      if (this.actIndex == this.songList.length - 1) {
+        this.toggleClass(this.$nextSongBtn, 'disabled', 'add');
+      }
+      this.toggleClass(this.$musicPlayeBox, 'showed', 'add');
+    }
+  }, {
+    key: 'hidePlayerBox',
+    value: function hidePlayerBox() {
+      this.toggleClass(this.$musicPlayeBox, 'showed', 'delete');
+    }
+  }, {
+    key: 'showLoading',
+    value: function showLoading() {
+      var $loading = this.root.querySelector('.mp-loading-box');
+      this.toggleClass($loading, 'showed', 'add');
+    }
+  }, {
+    key: 'hideLoading',
+    value: function hideLoading() {
+      var $loading = this.root.querySelector('.mp-loading-box');
+      this.toggleClass($loading, 'showed', 'delete');
+    }
+  }, {
+    key: 'toggleClass',
+    value: function toggleClass($dom, name, type) {
+      var className = $dom.className.replace(/\s+/, ' ').split(' ');
+      var set = new Set(className);
+      type == 'add' ? set.add(name) : set.delete(name);
+      $dom.className = [].concat(_toConsumableArray(set)).join(' ');
+    }
+  }]);
+
+  return FreelogMusicplayerWwzh;
+}(_CustomElement);
+
+customElements.define('freelog-musicplayer-wwzh', FreelogMusicplayerWwzh);
+</script>
