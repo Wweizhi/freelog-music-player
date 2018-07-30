@@ -21,20 +21,13 @@ class FreelogMusicplayerWwzh extends HTMLElement {
 
   init (){
     this.isPlayingSong = false
-    this.mpInfo = {
-      title: 'Happy Now', singer: 'Zedd (捷德)/Elley Duhè', lang: '英语', company: '环球唱片', type: 'Single',
-      publishDate: '2018-07-18', genre: 'Dance 舞曲'
-    }
+    this.mpInfo = { }
     this.songList = []
-    // this.songList = [ 
-    //   { name: '忘了时间', singer: '刘晓松', src: './111.mp3', duration: '03:30', album: '一个人' },
-    //   { name: '忘了爱', singer: '雷晓松', src: './111.mp3', duration: '03:20', album: '一个人' },
-    //   { name: '忘了我', singer: '肖晓松', src: './111.mp3', duration: '03:40', album: '一个人' },
-    //   { name: '忘了忘了', singer: '余晓松', src: './111.mp3', duration: '03:33', album: '一个人' },
-    // ]
     this.songPresentableList = []
-    this.actIndex = 0
+    this.songPresentableAuthInfos = []
+    this.actIndex = -1
     this.songPlayedTime = 0
+    this.playTpye = 'loop'
     
     this.getDom()
     this.bindEvent()
@@ -51,7 +44,7 @@ class FreelogMusicplayerWwzh extends HTMLElement {
   }
 
   fetchNodeResourceDetail (presentableId, resourceId){
-    return window.QI.fetch(`/v1/auths/presentable/${presentableId}?nodeId=${window.__auth_info__.__auth_node_id__}&resourceId=${resourceId}`)
+    return window.QI.fetch(`/v1/auths/presentable/${presentableId}.info?nodeId=${window.__auth_info__.__auth_node_id__}&resourceId=${resourceId}`)
             .then(resp => resp.json())
   }
 
@@ -93,14 +86,16 @@ class FreelogMusicplayerWwzh extends HTMLElement {
       .then(res => {
         if(res.errcode == 0 && res.data.length){
           this.songPresentableList = res.data
+          this.renderSongAuthInfo()
           this.songList = res.data.map(item => {
             return item.resourceInfo.meta
           })
           var str = this.songList.map((song, i) => {
           const { name, singer, src, duration, album } = song
           return `<tr data-index="${i}">
-                    <td scope="row">${i+1}</td>
-                    <td>${name}</td>
+                    <td scope="row">${i+1}<div class="lock-tag" data-index="lock-${i}"></div></td>
+                    <td class="td-name">${name}</td>
+                    <td><div class="play-btn" data-index="${i}"></div></td>
                     <td>${duration}</td>
                     <td>${singer}</td>
                     <td>${album}</td>
@@ -108,43 +103,72 @@ class FreelogMusicplayerWwzh extends HTMLElement {
           }).join('')
           this.root.querySelector('.mp-list tbody').innerHTML = str
           this.root.querySelector('#playlist-count').innerHTML = this.songList.length
+
           setTimeout(() => {
-            this.$trs = this.root.querySelectorAll('tbody tr')
-            
-            Array.from(this.$trs).forEach($dom => $dom.addEventListener('click', (e) => {
-              this.showLoading()
+            this.$trPlayBtns = this.root.querySelectorAll('tbody tr .play-btn')
+            this.$trLockTags = this.root.querySelectorAll('tbody tr .lock-tag')
+
+            Array.from(this.$trPlayBtns).forEach($dom => $dom.addEventListener('click', (e) => {
               var index = e.currentTarget.getAttribute('data-index')
-              this.actIndex = +index            
-              this.initSong().then(() => {
-                this.isShowedPlayer = true
-                this.playMusic()
-                this.hideLoading()
-              }).catch(e => this.hideLoading())
+              if(this.isInitingSong && index == this.actIndex){
+                return 
+              }
+              this.showLoading()
+              var targIndex = +index            
+              // this.initSong().then(() => {
+              //   this.isShowedPlayer = true
+              //   this.playMusic()
+              //   this.hideLoading()
+              // }).catch(e => this.hideLoading())
+              this.isPlayingSong = true
+              this.playOneSong(targIndex)
             }))
-          }, 0);
+
+            Array.from(this.$trLockTags).forEach($dom => $dom.addEventListener('click', e => {
+              var index = e.currentTarget.getAttribute('data-index')
+              index = +index.replace('lock-', '')
+              var authInfo = this.songPresentableAuthInfos[index]
+              this.triggerAppEvent(authInfo)
+            }))
+          }, 0)
           
         }
         
       })
   }
 
+  renderSongAuthInfo (){
+    this.songPresentableList.forEach((item, index) => {
+      const { presentableId, resourceId } = item
+      this.fetchNodeResourceDetail(presentableId, resourceId)
+        .then(authInfo => {
+          this.songPresentableAuthInfos[index] = authInfo
+          if(authInfo.errcode != 0){
+            this.toggleClass(this.root.querySelector(`[data-index="lock-${index}"]`), 'showed', 'add')
+          }
+        })
+    })
+  }
+
   renderSongTime (songPlayedTime = 0, songDuration){
     
     songPlayedTime = Math.floor(songPlayedTime)
-    if(!songDuration) return 
+    if(typeof songDuration == 'undefined') return 
     
     songDuration = Math.floor(songDuration)
     var playTime = this.getTimeStr(songPlayedTime)
     var totalTime = this.getTimeStr(songDuration)
 
     this.$songTimeBox.innerHTML = `
-    <div class="mpb-play-time">${playTime}</div>
-    /
-    <div class="mpb-total-time">${totalTime}</div>
-  `
+      <div class="mpb-play-time">${playTime}</div>
+      /
+      <div class="mpb-total-time">${totalTime}</div>
+    `
   }
 
   getTimeStr (time){
+    
+    if(time == 0 || !/\d+/.test(time) ) return '<span>00</span>:<span>00</span>'
     var hourTime = Math.floor(time/3600) % 60 
     hourTime = hourTime > 9 ? hourTime : (hourTime > 0 ? '0' + hourTime : 0)
 
@@ -176,6 +200,9 @@ class FreelogMusicplayerWwzh extends HTMLElement {
     this.$errorDuration = this.$errorToast.querySelector('#et-duration')
     this.$errorCloseBtn = this.$errorToast.querySelector('.et-close-btn')
 
+    this.$playTypeBtns = this.root.querySelectorAll('.mpb-play-type')
+    this.$themeBtns = this.root.querySelectorAll('.exchange-theme div')
+    this.$bgMask = this.root.querySelector('.mp-bg-mask')
   }
 
   bindEvent (){
@@ -184,17 +211,7 @@ class FreelogMusicplayerWwzh extends HTMLElement {
       
       var targIndex = this.actIndex - 1
       targIndex = targIndex < 0 ? 0 : targIndex
-      if(targIndex == 0){
-        this.toggleClass(this.$prevSongBtn, 'disabled', 'add') 
-      }else{
-        this.toggleClass(this.$nextSongBtn, 'disabled', 'delete')
-      }
-      
-      if(targIndex != this.actIndex){
-        this.actIndex = targIndex
-        this.initSong()
-        this.$progressBar.style.width = 0
-      }
+      this.playOneSong (targIndex)
     })
     
     this.$nextSongBtn.addEventListener('click', this.playNextSong.bind(this))
@@ -214,23 +231,18 @@ class FreelogMusicplayerWwzh extends HTMLElement {
       var playTime = Math.floor(ratio * this.$audio.duration)
       
       this.$audio.currentTime = playTime
+      
       this.renderSongTime (playTime, this.$audio.duration)
       
       this.$progressBar.style.width = +ratio.toFixed(2) * 100  + '%'
       
       this.isPlayingSong && this.gotSongCurrentTime()
-      console.log(this.$audio.currentTime, playTime)
       
     })
 
     this.$beginPlayBtn.addEventListener('click', (e) => {
       if(!this.isShowedPlayer){
-        !this.isInitingSong && this.initSong()
-                                .then(() => {
-                                  this.isShowedPlayer = true
-                                  this.playMusic()
-                                })
-                                .catch(e=>console.log(e))
+        !this.isInitingSong && this.songEndCallback()
       }else{
         if(!this.isPlayingSong){
           this.playMusic()
@@ -248,45 +260,75 @@ class FreelogMusicplayerWwzh extends HTMLElement {
       this.presentableErrorResp && this.triggerAppEvent(this.presentableErrorResp)
     })
 
+    Array.from(this.$playTypeBtns).forEach(($btn, index) => {
+      $btn.addEventListener('click', (e) => {
+        var $dom = e.currentTarget
+        var index = +$dom.getAttribute('data-index')
+        index = index == 4 ? 1 : index+1
+        this.showPlayTypeBtn(index)
+      })
+    })
+
+    Array.from(this.$themeBtns).forEach($dom => $dom.addEventListener('click', e => {
+      this.$bgMask.className = 'mp-bg-mask ' + e.currentTarget.className 
+    }))
+
     this.$errorCloseBtn.addEventListener('click', this.closeErrorToast.bind(this))
   }
 
   initSong (){
+    console.log('No.', this.actIndex + 1)
+    this.isShowedPlayer = true
     this.isInitingSong = true
+    
     const { name, singer } = this.songList[this.actIndex]
     
-    const { presentableId, nodeId, resourceId }  = this.songPresentableList[this.actIndex]
 
     this.$playMusicTitle.innerHTML = `
       <span class="mpb-music-name">${name}</span>
       -
       <span class="mpb-singer-name">${singer}</span>
     `
+    clearInterval(this.timer)
+    this.$progressBar.style.width = 0
 
-    return this.fetchNodeResourceDetail(presentableId, resourceId)
-      .then(res => {
-        this.isInitingSong = false
-        this.presentableErrorResp = res
-        this.handlerPresentableErrorCode( res, name )
-        return Promise.reject('handlerPresentableErrorCode')
-      })
-      .catch(e => {
-        if(e == 'handlerPresentableErrorCode') return Promise.reject()
+    var tempPromise = null
+    const { presentableId, nodeId, resourceId }  = this.songPresentableList[this.actIndex]
+    const authInfo = this.songPresentableAuthInfos[this.actIndex]
+    if(authInfo.errcode == 0){
+      return startSong.call(this)
+    }else{
+      return this.fetchNodeResourceDetail(presentableId, resourceId)
+        .then(res => {
+          if(res.errcode == 0){
+            let actIndex = this.actIndex
+            this.songPresentableAuthInfos[actIndex] = res
+            this.toggleClass(this.root.querySelector(`[data-index="lock-${actIndex}"]`), 'showed', 'delete')
+            return startSong.call(this)
+          }else{
+            this.isInitingSong = false
+            this.presentableErrorResp = authInfo
+            this.handlerPresentableErrorCode( authInfo, name )
+            this.renderSongTime(0, 0)
+            this.$audio.src = ''
+            return Promise.reject()
+          }
+        })
+    }
 
-        this.$audio.src = `api/v1/auths/presentable/${presentableId}.data?nodeId=${nodeId}&resourceId=${resourceId}`
+    function startSong (){
+      const { presentableId, nodeId, resourceId }  = this.songPresentableList[this.actIndex]
+      this.$audio.src = `api/v1/auths/presentable/${presentableId}.data?nodeId=${nodeId}&resourceId=${resourceId}`
 
-        if(this.isPlayingSong){
-          this.$audio.play()
-            .then(() => {
-              this.renderSongTime(0, this.$audio.duration)
-            })
-        }else{
-          this.renderSongTime(0, this.$audio.duration)
-        }
-        this.showPlayerBox()
-        return Promise.resolve()
-      })
-
+      if(this.isPlayingSong){
+        this.playMusic()
+      }else{
+        this.renderSongTime(0, this.$audio.duration)
+      }
+      this.showPlayerBox()
+      this.isShowedPlayer = true
+      return Promise.resolve()
+    }
   }
 
   playMusic (){
@@ -308,16 +350,36 @@ class FreelogMusicplayerWwzh extends HTMLElement {
   playNextSong (){
     var targIndex = this.actIndex + 1
     targIndex = targIndex == this.songList.length ? targIndex - 1 : targIndex
+    this.playOneSong (targIndex)
+  }
+
+  playOneSong (targIndex){
+
+    console.log('targIndex --', targIndex, this.songList.length - 1)
     if(targIndex == (this.songList.length - 1)){
       this.toggleClass(this.$nextSongBtn, 'disabled', 'add') 
+      this.toggleClass(this.$prevSongBtn, 'disabled', 'delete')
+      
+    }if(targIndex == 0){
+      this.toggleClass(this.$prevSongBtn, 'disabled', 'add') 
+      this.toggleClass(this.$nextSongBtn, 'disabled', 'delete')
     }else{
+      this.toggleClass(this.$nextSongBtn, 'disabled', 'delete')
       this.toggleClass(this.$prevSongBtn, 'disabled', 'delete') 
     }
-    if(targIndex != this.actIndex){
-      this.actIndex = targIndex
-      this.initSong()
+    // if(targIndex != this.actIndex){
+    //   this.actIndex = targIndex
+    //   this.showLoading()
+    //   this.initSong().then(() => this.hideLoading()).catch(e => this.hideLoading())
+    //   this.$progressBar.style.width = 0
+    // }
+    this.actIndex = targIndex
+      this.showLoading()
+      this.initSong().then(() => {
+        this.playMusic()
+        this.hideLoading()
+      }).catch(e => this.hideLoading())
       this.$progressBar.style.width = 0
-    }
   }
 
   gotSongCurrentTime (){
@@ -328,16 +390,59 @@ class FreelogMusicplayerWwzh extends HTMLElement {
 
     this.timer = setInterval(() => {
       let { currentTime, duration } = this.$audio
-      console.log('currentTime', currentTime)
       
       this.renderSongTime(currentTime, duration)
       
       this.$progressBar.style.width = +(currentTime / duration * 100 ).toFixed(2) + '%'
       if(currentTime == duration ){
-        this.playNextSong()
         clearInterval(this.timer)
+        this.songEndCallback()
       }
     }, 1000)
+  }
+
+  songEndCallback (){
+    this.showLoading()
+    this.isPlayingSong = true
+    switch(this.playTpye){
+      case 'loop': {
+        var targIndex = this.actIndex + 1
+        while(this.songPresentableAuthInfos[targIndex].errcode != 0){
+          targIndex += 1
+        }
+        if(targIndex >= this.songList.length ){
+          targIndex = 1
+        }
+        this.playOneSong(targIndex)
+        break
+      }
+      case 'list': {
+        var targIndex = this.actIndex + 1
+        while(this.songPresentableAuthInfos[targIndex].errcode != 0){
+          targIndex += 1
+        }
+        if(targIndex >= (this.songList.length - 1) ){
+          this.isPlayingSong = false
+          return 
+        }
+        this.playOneSong(targIndex)
+        break
+      }
+      case 'random': {
+        var targIndex = Math.floor(Math.random(1) * this.songList.length)
+        while(this.songPresentableAuthInfos[targIndex].errcode != 0 || targIndex == this.actIndex){
+          targIndex = Math.floor(Math.random(1) * this.songList.length) + 1
+        }
+        this.playOneSong(targIndex)
+        break
+      }
+      case 'single': {
+        this.$audio.currentTime = 0
+        this.playMusic()
+        break
+      }
+    }
+    return 
   }
 
   handlerPresentableErrorCode (resp, songName){
@@ -356,14 +461,25 @@ class FreelogMusicplayerWwzh extends HTMLElement {
       }
       case 501: {
         this.showErrorToast(
-          '亲，你的歌曲合同未执行！', // 未找到有效的presentable合约(用户尚未与请求的presentable签约或者合约已废弃)
+          '亲，你的歌曲合同未执行！', // 用户合同未激活
           '去执行',
           5,
           () => {
             this.triggerAppEvent(resp)
           }
         )
-        breal
+        break
+      }
+      case 401: {
+        this.showErrorToast(
+          '亲，该歌曲的节点合同未激活', // 节点合同未激活
+          '通知节点',
+          5,
+          () => {
+            this.triggerAppEvent(resp)
+          }
+        )
+        break
       }
     }
   }
@@ -452,6 +568,18 @@ class FreelogMusicplayerWwzh extends HTMLElement {
       this.toggleClass(this.$nextSongBtn, 'disabled', 'add') 
     }
     this.toggleClass(this.$musicPlayeBox, 'showed', 'add')
+  }
+
+  showPlayTypeBtn (index){
+    this.$playTypeBtns.forEach($btn => {
+      var i = $btn.getAttribute('data-index')
+      if(i == index){
+        this.playTpye = $btn.getAttribute('data-type')
+        this.toggleClass($btn, 'showed', 'add')
+      }else{
+        this.toggleClass($btn, 'showed', 'delete')
+      }
+    })
   }
 
   hidePlayerBox (){

@@ -23,9 +23,16 @@
               
           <div class="music-action" role="toolbar">
             <button class="btn btn-success"><i class=""></i>开始播放</button>
-            <button class="btn btn-dafault disabled"><i class=""></i>收藏</button>
-            <button class="btn btn-dafault disabled"><i class=""></i>评论</button>
-            <button class="btn btn-dafault disabled"><i class=""></i>更多</button>
+            <button class="btn btn-dafault disabled hidden"><i class=""></i>收藏</button>
+            <button class="btn btn-dafault disabled hidden"><i class=""></i>评论</button>
+            <button class="btn btn-dafault disabled hidden"><i class=""></i>更多</button>
+          </div>
+          <div class="exchange-theme cleafix">
+            <div class="theme-bgc-pink"></div>
+            <div class="theme-bgc-purple"></div>
+            <div class="theme-bgc-orange"></div>
+            <div class="theme-bgc-gray"></div>
+            <div class="theme-bgc-blue"></div>
           </div>
       </div>
       <div class="mp-list-head">
@@ -36,12 +43,13 @@
         <!-- <div class="right-box">播放：<strong id="play-count" class="s-fc6">363659</strong>次</div> -->
       </div>
       <div class="mp-list">
-          <table class="table table-bordered">
+          <table class="table">
               <thead>
                 <tr>
                   <th>#</th>
                   <th width="238">歌曲标题</th>
-                  <th width="80">时长</th>
+                  <th width="40"></th>
+                  <th width="40">时长</th>
                   <th>歌手</th>
                   <th>专辑</th>
                 </tr>
@@ -53,12 +61,11 @@
       <div class="music-player-bar clearfix">
         <div class="music-player-b-cont clearfix">
           <div class="mpb-left">
-            <a class="mpb-btn-prev" href="javascript:;">&lt; </a>
+            <a class="mpb-btn-prev" href="javascript:;"><span></span></a>
             <a class="mpb-btn-play" href="javascript:;">
               <span></span>
-              <span></span>
             </a>
-            <a class="mpb-btn-next" href="javascript:;">&gt;</a>
+            <a class="mpb-btn-next" href="javascript:;"><span></span></a>
           </div>
           <div class="mpb-center">
             <div class="progress">
@@ -78,12 +85,15 @@
                 <span>04</span>:<span>00</span>
               </div> -->
             </div>
-            <div class="mpb-c-audio-bbox">
+            <div class="mpb-c-audio-box">
               <audio src="" controls="controls"></audio>
             </div>
           </div>
           <div class="mpb-right">
-            
+              <a class="mpb-play-type mpb-btn-play-loop showed" href="javascript:;" data-type="loop" data-index="1" title="列表循环播放"><span></span></a>
+              <a class="mpb-play-type mpb-btn-play-list" href="javascript:;" data-type="list" data-index="2" title="列表顺序播放"><span></span></a>
+              <a class="mpb-play-type mpb-btn-play-random" href="javascript:;" data-type="random" data-index="3" title="随机播放"><span></span></a>
+              <a class="mpb-play-type mpb-btn-play-single" href="javascript:;" data-type="single" data-index="4" title="单曲循环播放"><span></span></a>
           </div>
         </div>
         
@@ -104,8 +114,8 @@
           </ul>
       </div>
     </div>
-    
   </div>
+  <div class="mp-bg-mask theme-bgc-orange"></div>
 </template>
 
 <script src="./index.js"></script>

@@ -19,6 +19,7 @@ const src = path.join(dirname, '../src')
 const pkg = require(path.join(dirname, '../package.json'))
 var isBuild = true
 var inlineHtml = require('gulp-inline-html');
+var less = require('gulp-less')
 
 gulp.task('clean', function () {
   return del([dest], {force: true})
@@ -49,6 +50,7 @@ gulp.task('compile', function () {
     }))
     .pipe(gulpif(isJs, babel()))
     .pipe(gulpif(isCss, autoprefixer({browsers: ['> 1%']})))
+    .pipe(gulpif(isCss, less()))
     .pipe(inlineHtml())
     .pipe(gulpif(isHtml, htmlmin({
       collapseWhitespace: isBuild,
